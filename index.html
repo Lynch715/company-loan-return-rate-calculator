@@ -135,7 +135,7 @@
 
     .result-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 14px;
       margin-bottom: 18px;
     }
@@ -642,7 +642,7 @@
     <section class="header">
       <div class="org-name">邮储银行重庆分行 公司金融部</div>
       <h1>贷款归行率快速测算表</h1>
-      <p>把“归行率提升目标”转化为“需要多少年日均、多少资金天数、多少钱停多少天”，便于客户经理制定具体营销方案。</p>
+      <p>把“归行率提升目标”转化为“需要多少年日均、多少钱停多少天、预计产生多少收入”，便于客户经理制定具体营销方案。</p>
     </section>
 
     <div class="grid">
@@ -668,21 +668,11 @@
         </div>
 
         <div class="form-group">
-          <label for="daysInYear">测算天数</label>
+          <label for="depositYieldRate">存款收益率</label>
           <div class="input-wrap">
-            <input id="daysInYear" type="number" value="365" min="1" step="1" />
-            <span class="unit">天</span>
-          </div>
-          <div class="tips">一般按 365 天测算</div>
-        </div>
-
-        <div class="form-group">
-          <label for="depositSpreadRate">存款利差率</label>
-          <div class="input-wrap">
-            <input id="depositSpreadRate" type="number" value="2.33" min="0" step="0.01" />
+            <input id="depositYieldRate" type="number" value="2.33" min="0" step="0.01" />
             <span class="unit">%</span>
           </div>
-          <div class="tips">活期利差率示例：2.33%，即 10000 万元年日均对应 233 万元/年</div>
         </div>
 
         <div class="btn-row">
@@ -691,13 +681,6 @@
           <button class="secondary" onclick="window.print()">打印/另存PDF</button>
         </div>
 
-        <div class="formula">
-          <strong>核心公式：</strong><br />
-          需年日均存款 = 贷款余额 × 目标归行率<br />
-          需资金天数 = 需年日均存款 × 365<br />
-          需停留天数 = 需资金天数 ÷ 到账资金规模<br />
-          存款利差收入 = 需年日均存款 × 存款利差率
-        </div>
       </section>
 
       <section class="card">
@@ -710,14 +693,9 @@
             <div class="sub">贷款余额 × 目标归行率</div>
           </div>
           <div class="metric">
-            <div class="label">需完成资金天数</div>
-            <div class="value" id="fundDays">-</div>
-            <div class="sub">年日均 × 测算天数</div>
-          </div>
-          <div class="metric">
-            <div class="label">预计存款利差收入</div>
+            <div class="label">预计产生收入</div>
             <div class="value" id="interestIncome">-</div>
-            <div class="sub">年日均存款 × 存款利差率</div>
+            <div class="sub">年日均存款 × 存款收益率</div>
           </div>
         </div>
 
@@ -728,21 +706,21 @@
           <div class="form-group">
             <label for="fundMinAmount">最小资金规模</label>
             <div class="input-wrap">
-              <input id="fundMinAmount" type="number" value="1000" min="1" step="100" />
+              <input id="fundMinAmount" type="number" value="10000" min="1" step="100" />
               <span class="unit">万元</span>
             </div>
           </div>
           <div class="form-group">
             <label for="fundMaxAmount">最大资金规模</label>
             <div class="input-wrap">
-              <input id="fundMaxAmount" type="number" value="100000" min="1" step="1000" />
+              <input id="fundMaxAmount" type="number" value="50000" min="1" step="1000" />
               <span class="unit">万元</span>
             </div>
           </div>
           <div class="form-group">
             <label for="fundLevelCount">测算档位数</label>
             <div class="input-wrap">
-              <input id="fundLevelCount" type="number" value="8" min="2" max="12" step="1" />
+              <input id="fundLevelCount" type="number" value="4" min="2" max="12" step="1" />
               <span class="unit">档</span>
             </div>
           </div>
@@ -778,7 +756,7 @@
         </div>
 
         <div class="plan-box">
-          <h3>客户经理话术示例</h3>
+          <h3>测算说明</h3>
           <p id="speechText">-</p>
         </div>
 
@@ -786,7 +764,7 @@
           <h3>五、复制与二维码</h3>
           <div class="share-summary" id="shareSummary">-</div>
           <div class="btn-row">
-            <button class="accent" id="copySummaryBtn" onclick="copySummary()">复制测算结果/话术</button>
+            <button class="accent" id="copySummaryBtn" onclick="copySummary()">复制测算结果/说明</button>
             <button class="secondary" onclick="copyPageUrl()">复制页面链接</button>
           </div>
           <div class="copy-status" id="copyStatus"></div>
@@ -830,18 +808,17 @@
     function calculate() {
       const loanAmount = getInputNumber("loanAmount");
       const targetRate = getInputNumber("targetRate") / 100;
-      const daysInYear = getInputNumber("daysInYear") || 365;
-      const depositSpreadRate = getInputNumber("depositSpreadRate") / 100;
+      const daysInYear = 365;
+      const depositYieldRate = getInputNumber("depositYieldRate") / 100;
       const fundMinAmount = getInputNumber("fundMinAmount") || 1;
       const fundMaxAmount = getInputNumber("fundMaxAmount") || fundMinAmount;
-      const fundLevelCount = Math.round(getInputNumber("fundLevelCount") || 8);
+      const fundLevelCount = Math.round(getInputNumber("fundLevelCount") || 4);
 
       const avgDeposit = loanAmount * targetRate;
       const fundDays = avgDeposit * daysInYear;
-      const interestIncome = avgDeposit * depositSpreadRate;
+      const interestIncome = avgDeposit * depositYieldRate;
 
       document.getElementById("avgDeposit").textContent = formatWan(avgDeposit, 0);
-      document.getElementById("fundDays").textContent = formatNumber(fundDays, 0) + " 万元·天";
       document.getElementById("interestIncome").textContent = formatWan(interestIncome, 2);
 
       renderDaysTable(fundDays, fundMinAmount, fundMaxAmount, fundLevelCount);
@@ -942,10 +919,9 @@
         `贷款余额：${formatWan(loanAmount)}`,
         `目标归行率：${targetRateText}`,
         `需形成年日均存款：${formatWan(avgDeposit)}`,
-        `需完成资金天数：${formatNumber(fundDays, 0)} 万元·天`,
-        `预计存款利差收入：${formatWan(interestIncome, 2)}`,
+        `预计产生收入：${formatWan(interestIncome, 2)}`,
         "",
-        "客户经理话术：",
+        "测算说明：",
         speech,
         "",
         `测算工具：${pageUrl}`
@@ -991,7 +967,7 @@
 
     function copySummary() {
       const summary = document.getElementById("shareSummary").textContent;
-      copyText(summary, "已复制测算结果和话术");
+      copyText(summary, "已复制测算结果和说明");
     }
 
     function copyPageUrl() {
@@ -1001,11 +977,10 @@
     function resetDefault() {
       document.getElementById("loanAmount").value = 10000;
       document.getElementById("targetRate").value = 10;
-      document.getElementById("daysInYear").value = 365;
-      document.getElementById("depositSpreadRate").value = 2.33;
-      document.getElementById("fundMinAmount").value = 1000;
-      document.getElementById("fundMaxAmount").value = 100000;
-      document.getElementById("fundLevelCount").value = 8;
+      document.getElementById("depositYieldRate").value = 2.33;
+      document.getElementById("fundMinAmount").value = 10000;
+      document.getElementById("fundMaxAmount").value = 50000;
+      document.getElementById("fundLevelCount").value = 4;
       calculate();
     }
 
