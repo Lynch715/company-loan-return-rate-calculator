@@ -245,6 +245,25 @@
       padding: 9px 10px;
     }
 
+    .quarter-input {
+      width: 120px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .status-ok {
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .status-pending {
+      color: var(--red);
+      font-weight: 700;
+    }
+
     .btn-row {
       display: flex;
       gap: 10px;
@@ -578,11 +597,24 @@
       }
 
       .quarter-table td:nth-child(3)::before {
-        content: "本季停留天数";
+        content: "停留天数";
       }
 
       .quarter-table td:nth-child(4)::before {
-        content: "累计年日均";
+        content: "本季贡献";
+      }
+
+      .quarter-table td:nth-child(5)::before {
+        content: "累计完成率";
+      }
+
+      .quarter-table td:nth-child(6)::before {
+        content: "状态";
+      }
+
+      .quarter-input {
+        width: 150px;
+        min-height: 40px;
       }
 
       .plan-box,
@@ -747,8 +779,10 @@
               <tr>
                 <th>季度</th>
                 <th>计划到账资金</th>
-                <th>本季停留天数</th>
-                <th>累计年日均</th>
+                <th>停留天数</th>
+                <th>本季贡献</th>
+                <th>累计完成率</th>
+                <th>状态</th>
               </tr>
             </thead>
             <tbody id="quarterTable"></tbody>
@@ -884,28 +918,60 @@
       });
     }
 
-    function renderQuarterTable(fundDays, daysInYear, fundOptions) {
-      const tbody = document.getElementById("quarterTable");
-      tbody.innerHTML = "";
+    function getExistingInputNumber(id, fallback) {
+      const el = document.getElementById(id);
+      if (!el) return fallback;
+      const val = parseFloat(el.value);
+      return isNaN(val) ? fallback : val;
+    }
 
-      const amountPerQuarter = fundOptions[0] || 1;
-      const totalDays = Math.max(1, Math.ceil(fundDays / amountPerQuarter));
+    function splitDaysAcrossQuarters(totalDays) {
       const baseDays = Math.floor(totalDays / quarters.length);
       const extraDays = totalDays % quarters.length;
+      return quarters.map((_, index) => baseDays + (index < extraDays ? 1 : 0));
+    }
+
+    function renderQuarterTable(fundDays, daysInYear, fundOptions) {
+      const tbody = document.getElementById("quarterTable");
+      const defaultAmount = fundOptions[0] || 1;
+      const defaultTotalDays = Math.max(1, Math.ceil(fundDays / defaultAmount));
+      const defaultDays = splitDaysAcrossQuarters(defaultTotalDays);
+      const plans = quarters.map((_, index) => ({
+        amount: getExistingInputNumber(`quarterAmount${index}`, defaultAmount),
+        days: getExistingInputNumber(`quarterDays${index}`, defaultDays[index])
+      }));
+
+      tbody.innerHTML = "";
       let cumulativeDays = 0;
+      let reached = false;
 
       quarters.forEach((q, index) => {
-        const quarterDays = baseDays + (index < extraDays ? 1 : 0);
-        cumulativeDays += quarterDays;
-        const avg = amountPerQuarter * cumulativeDays / daysInYear;
+        const plan = plans[index];
+        const contribution = plan.amount * plan.days;
+        cumulativeDays += contribution;
+        const completionRate = fundDays > 0 ? cumulativeDays / fundDays * 100 : 0;
+        const isReached = completionRate >= 100;
+        const status = reached
+          ? "已达标，可不安排"
+          : isReached
+            ? "本季达标"
+            : "未达标";
+        const statusClass = isReached || reached ? "status-ok" : "status-pending";
+        reached = reached || isReached;
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${q}</td>
-          <td>${formatWan(amountPerQuarter)}</td>
-          <td>${quarterDays} 天</td>
-          <td>${formatWan(avg, 0)}</td>
+          <td><input class="quarter-input" id="quarterAmount${index}" type="number" value="${plan.amount}" min="0" step="100" /> 万元</td>
+          <td><input class="quarter-input" id="quarterDays${index}" type="number" value="${plan.days}" min="0" step="1" /> 天</td>
+          <td>${formatNumber(contribution, 0)} 万元·天</td>
+          <td>${formatNumber(completionRate, 1)}%</td>
+          <td class="${statusClass}">${status}</td>
         `;
         tbody.appendChild(tr);
+      });
+
+      document.querySelectorAll(".quarter-input").forEach(input => {
+        input.addEventListener("input", calculate);
       });
     }
 
@@ -1000,6 +1066,12 @@
       document.getElementById("fundMinAmount").value = 10000;
       document.getElementById("fundMaxAmount").value = 50000;
       document.getElementById("fundLevelCount").value = 4;
+      quarters.forEach((_, index) => {
+        const amountInput = document.getElementById(`quarterAmount${index}`);
+        const daysInput = document.getElementById(`quarterDays${index}`);
+        if (amountInput) amountInput.value = "";
+        if (daysInput) daysInput.value = "";
+      });
       calculate();
     }
 
