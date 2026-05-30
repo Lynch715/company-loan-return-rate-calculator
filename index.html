@@ -578,11 +578,11 @@
       }
 
       .quarter-table td:nth-child(3)::before {
-        content: "计划停留天数";
+        content: "本季停留天数";
       }
 
       .quarter-table td:nth-child(4)::before {
-        content: "可形成年日均";
+        content: "累计年日均";
       }
 
       .plan-box,
@@ -747,8 +747,8 @@
               <tr>
                 <th>季度</th>
                 <th>计划到账资金</th>
-                <th>计划停留天数</th>
-                <th>可形成年日均</th>
+                <th>本季停留天数</th>
+                <th>累计年日均</th>
               </tr>
             </thead>
             <tbody id="quarterTable"></tbody>
@@ -822,13 +822,14 @@
       const avgDeposit = loanAmount * targetRate;
       const fundDays = avgDeposit * daysInYear;
       const interestIncome = avgDeposit * depositYieldRate;
+      const fundOptions = generateFundOptions(fundMinAmount, fundMaxAmount, fundLevelCount);
 
       document.getElementById("avgDeposit").textContent = formatWan(avgDeposit, 0);
       document.getElementById("interestIncome").textContent = formatWan(interestIncome, 2);
 
-      renderDaysTable(fundDays, fundMinAmount, fundMaxAmount, fundLevelCount);
-      renderQuarterTable(fundDays, daysInYear);
-      renderSpeech(loanAmount, targetRate, avgDeposit, fundDays);
+      renderDaysTable(fundDays, fundOptions);
+      renderQuarterTable(fundDays, daysInYear, fundOptions);
+      renderSpeech(loanAmount, targetRate, avgDeposit, fundDays, fundOptions);
       renderShareSummary(loanAmount, targetRate, avgDeposit, fundDays, interestIncome);
     }
 
@@ -862,11 +863,9 @@
       return [...new Set(amounts)].filter(amount => amount > 0).sort((a, b) => a - b);
     }
 
-    function renderDaysTable(fundDays, minAmount, maxAmount, levelCount) {
+    function renderDaysTable(fundDays, fundOptions) {
       const tbody = document.getElementById("daysTable");
       tbody.innerHTML = "";
-
-      const fundOptions = generateFundOptions(minAmount, maxAmount, levelCount);
 
       fundOptions.forEach(amount => {
         const days = amount > 0 ? fundDays / amount : 0;
@@ -885,33 +884,47 @@
       });
     }
 
-    function renderQuarterTable(fundDays, daysInYear) {
+    function renderQuarterTable(fundDays, daysInYear, fundOptions) {
       const tbody = document.getElementById("quarterTable");
       tbody.innerHTML = "";
 
-      const amountPerQuarter = 10000;
-      const daysPerQuarter = fundDays / 4 / amountPerQuarter;
+      const amountPerQuarter = fundOptions[0] || 1;
+      const totalDays = Math.max(1, Math.ceil(fundDays / amountPerQuarter));
+      const baseDays = Math.floor(totalDays / quarters.length);
+      const extraDays = totalDays % quarters.length;
+      let cumulativeDays = 0;
 
-      quarters.forEach(q => {
-        const avg = amountPerQuarter * daysPerQuarter / daysInYear;
+      quarters.forEach((q, index) => {
+        const quarterDays = baseDays + (index < extraDays ? 1 : 0);
+        cumulativeDays += quarterDays;
+        const avg = amountPerQuarter * cumulativeDays / daysInYear;
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${q}</td>
           <td>${formatWan(amountPerQuarter)}</td>
-          <td>${formatCeilDays(daysPerQuarter)}</td>
+          <td>${quarterDays} 天</td>
           <td>${formatWan(avg, 0)}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function renderSpeech(loanAmount, targetRate, avgDeposit, fundDays) {
-      const targetRateText = formatNumber(targetRate * 100, 1).replace(".0", "") + "%";
-      const oneLoanDays = loanAmount > 0 ? fundDays / loanAmount : 0;
-      const twoLoanDays = loanAmount * 2 > 0 ? fundDays / (loanAmount * 2) : 0;
-      const fourLoanDays = loanAmount * 4 > 0 ? fundDays / (loanAmount * 4) : 0;
+    function getRepresentativeFundOptions(fundOptions) {
+      if (fundOptions.length <= 3) return fundOptions;
+      return [
+        fundOptions[0],
+        fundOptions[Math.floor((fundOptions.length - 1) / 2)],
+        fundOptions[fundOptions.length - 1]
+      ];
+    }
 
-      const text = `这笔贷款余额为 ${formatWan(loanAmount)}，如果要实现 ${targetRateText} 归行率，全年需要形成约 ${formatWan(avgDeposit)} 年日均存款。换算成资金安排，可以理解为：${formatWan(loanAmount)}资金沉淀约 ${formatCeilDays(oneLoanDays)}，或者 ${formatWan(loanAmount * 2)}资金沉淀约 ${formatCeilDays(twoLoanDays)}，或者 ${formatWan(loanAmount * 4)}资金沉淀约 ${formatCeilDays(fourLoanDays)}。可结合客户工程款到账、监管资金留存、票据保证金、提前还款前资金停留等节点，分阶段实现归行目标。`;
+    function renderSpeech(loanAmount, targetRate, avgDeposit, fundDays, fundOptions) {
+      const targetRateText = formatNumber(targetRate * 100, 1).replace(".0", "") + "%";
+      const examples = getRepresentativeFundOptions(fundOptions)
+        .map(amount => `${formatWan(amount)}资金沉淀约 ${formatCeilDays(fundDays / amount)}`)
+        .join("，或者 ");
+
+      const text = `这笔贷款余额为 ${formatWan(loanAmount)}，如果要实现 ${targetRateText} 归行率，全年需要形成约 ${formatWan(avgDeposit)} 年日均存款。按当前资金规模区间测算，可以理解为：${examples}。可结合客户工程款到账、监管资金留存、票据保证金、提前还款前资金停留等节点，分阶段实现归行目标。`;
 
       document.getElementById("speechText").textContent = text;
     }
