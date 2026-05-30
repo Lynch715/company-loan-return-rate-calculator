@@ -268,6 +268,10 @@
       color: #374151;
     }
 
+    button.accent {
+      background: var(--green);
+    }
+
     button:hover {
       opacity: 0.92;
     }
@@ -289,6 +293,62 @@
     .plan-box p {
       margin: 6px 0;
       font-size: 14px;
+    }
+
+    .share-box {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 18px;
+    }
+
+    .share-box h3 {
+      margin: 0 0 10px;
+      color: var(--primary);
+      font-size: 17px;
+    }
+
+    .share-summary {
+      min-height: 120px;
+      padding: 12px;
+      border: 1px solid #dbe3ec;
+      border-radius: 8px;
+      background: #fff;
+      color: #334155;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
+    .copy-status {
+      min-height: 20px;
+      margin-top: 8px;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .qr-panel {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 14px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .qr-panel img {
+      width: 140px;
+      height: 140px;
+      border: 1px solid #dbe3ec;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .page-url {
+      color: var(--muted);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+      margin-bottom: 10px;
     }
 
     .formula {
@@ -317,6 +377,10 @@
       }
 
       .range-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .qr-panel {
         grid-template-columns: 1fr;
       }
 
@@ -490,6 +554,23 @@
           <p id="speechText">-</p>
         </div>
 
+        <div class="share-box">
+          <h3>五、复制与二维码</h3>
+          <div class="share-summary" id="shareSummary">-</div>
+          <div class="btn-row">
+            <button class="accent" id="copySummaryBtn" onclick="copySummary()">复制测算结果/话术</button>
+            <button class="secondary" onclick="copyPageUrl()">复制页面链接</button>
+          </div>
+          <div class="copy-status" id="copyStatus"></div>
+          <div class="qr-panel">
+            <img id="qrImage" alt="页面二维码" />
+            <div>
+              <div class="page-url" id="pageUrlText"></div>
+              <div class="tips">微信或手机相机扫码即可打开页面，避免手输较长网址。</div>
+            </div>
+          </div>
+        </div>
+
         <div class="footer-note">
           注：本工具为经营测算工具，结果按简单年日均逻辑估算，具体口径以总行、分行统计规则为准。
         </div>
@@ -498,6 +579,7 @@
   </div>
 
   <script>
+    const pageUrl = "https://lynch715.github.io/company-loan-return-rate-calculator/";
     const quarters = ["一季度", "二季度", "三季度", "四季度"];
 
     function formatNumber(num, digits = 0) {
@@ -537,6 +619,7 @@
       renderDaysTable(fundDays, fundMinAmount, fundMaxAmount, fundLevelCount);
       renderQuarterTable(fundDays, daysInYear);
       renderSpeech(loanAmount, targetRate, avgDeposit, fundDays);
+      renderShareSummary(loanAmount, targetRate, avgDeposit, fundDays, interestIncome);
     }
 
     function getRoundUnit(maxAmount) {
@@ -620,6 +703,71 @@
       const text = `这笔贷款余额为 ${formatWan(loanAmount)}，如果要实现 ${targetRateText} 归行率，全年需要形成约 ${formatWan(avgDeposit)} 年日均存款。换算成资金安排，可以理解为：${formatWan(loanAmount)}资金沉淀约 ${formatNumber(oneLoanDays, 1)} 天，或者 ${formatWan(loanAmount * 2)}资金沉淀约 ${formatNumber(twoLoanDays, 1)} 天，或者 ${formatWan(loanAmount * 4)}资金沉淀约 ${formatNumber(fourLoanDays, 1)} 天。可结合客户工程款到账、监管资金留存、票据保证金、提前还款前资金停留等节点，分阶段实现归行目标。`;
 
       document.getElementById("speechText").textContent = text;
+    }
+
+    function buildShareSummary(loanAmount, targetRate, avgDeposit, fundDays, interestIncome) {
+      const targetRateText = formatNumber(targetRate * 100, 1).replace(".0", "") + "%";
+      const speech = document.getElementById("speechText").textContent;
+
+      return [
+        "贷款归行率测算结果",
+        `贷款余额：${formatWan(loanAmount)}`,
+        `目标归行率：${targetRateText}`,
+        `需形成年日均存款：${formatWan(avgDeposit)}`,
+        `需完成资金天数：${formatNumber(fundDays, 0)} 万元·天`,
+        `预计存款利差收入：${formatWan(interestIncome, 2)}`,
+        "",
+        "客户经理话术：",
+        speech,
+        "",
+        `测算工具：${pageUrl}`
+      ].join("\n");
+    }
+
+    function renderShareSummary(loanAmount, targetRate, avgDeposit, fundDays, interestIncome) {
+      const summary = buildShareSummary(loanAmount, targetRate, avgDeposit, fundDays, interestIncome);
+      document.getElementById("shareSummary").textContent = summary;
+      document.getElementById("pageUrlText").textContent = pageUrl;
+      document.getElementById("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(pageUrl)}`;
+    }
+
+    function fallbackCopy(text) {
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    async function copyText(text, successMessage) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else if (!fallbackCopy(text)) {
+          throw new Error("copy failed");
+        }
+
+        document.getElementById("copyStatus").textContent = successMessage;
+      } catch (error) {
+        document.getElementById("copyStatus").textContent = "复制未成功，可长按上方文本手动复制";
+      }
+    }
+
+    function copySummary() {
+      const summary = document.getElementById("shareSummary").textContent;
+      copyText(summary, "已复制测算结果和话术");
+    }
+
+    function copyPageUrl() {
+      copyText(pageUrl, "已复制页面链接");
     }
 
     function resetDefault() {
