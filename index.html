@@ -389,6 +389,234 @@
       }
     }
 
+    @media (max-width: 640px) {
+      body {
+        background: #eef3f7;
+        line-height: 1.5;
+      }
+
+      .page {
+        width: 100%;
+        padding: 10px 10px 28px;
+      }
+
+      .header {
+        padding: 18px 16px;
+        margin-bottom: 12px;
+        box-shadow: none;
+      }
+
+      .org-name {
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+
+      .header h1 {
+        margin-bottom: 6px;
+        font-size: 22px;
+        line-height: 1.25;
+      }
+
+      .header p {
+        font-size: 13px;
+      }
+
+      .grid {
+        gap: 12px;
+      }
+
+      .card {
+        padding: 14px;
+        box-shadow: none;
+      }
+
+      .card h2 {
+        margin-bottom: 12px;
+        font-size: 17px;
+      }
+
+      .form-group {
+        margin-bottom: 12px;
+      }
+
+      label {
+        font-size: 13px;
+      }
+
+      .input-wrap {
+        border-radius: 8px;
+      }
+
+      input, select {
+        min-height: 44px;
+        padding: 10px 11px;
+      }
+
+      .unit {
+        padding: 0 10px;
+        font-size: 13px;
+      }
+
+      .tips {
+        font-size: 12px;
+      }
+
+      .btn-row {
+        gap: 8px;
+      }
+
+      button {
+        width: 100%;
+        min-height: 44px;
+        padding: 11px 12px;
+      }
+
+      .result-row {
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .metric {
+        padding: 12px;
+      }
+
+      .metric .value {
+        font-size: 20px;
+      }
+
+      .section-title {
+        margin: 18px 0 8px;
+      }
+
+      .section-title h3 {
+        font-size: 16px;
+      }
+
+      .range-controls {
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .table-scroll {
+        overflow-x: visible;
+      }
+
+      table {
+        min-width: 0;
+      }
+
+      .days-table,
+      .days-table thead,
+      .days-table tbody,
+      .days-table tr,
+      .days-table td,
+      .quarter-table,
+      .quarter-table thead,
+      .quarter-table tbody,
+      .quarter-table tr,
+      .quarter-table td {
+        display: block;
+        width: 100%;
+      }
+
+      .days-table thead,
+      .quarter-table thead {
+        display: none;
+      }
+
+      .days-table tr,
+      .quarter-table tr {
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .days-table td,
+      .quarter-table td {
+        border-bottom: none;
+        padding: 6px 0;
+        text-align: left;
+      }
+
+      .days-table td:not(:last-child),
+      .quarter-table td {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .days-table td::before,
+      .quarter-table td::before {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .days-table td:nth-child(1)::before {
+        content: "到账资金规模";
+      }
+
+      .days-table td:nth-child(2)::before {
+        content: "需停留天数";
+      }
+
+      .days-table td:nth-child(3)::before {
+        content: "沟通表达";
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .quarter-table td:nth-child(1)::before {
+        content: "季度";
+      }
+
+      .quarter-table td:nth-child(2)::before {
+        content: "计划到账资金";
+      }
+
+      .quarter-table td:nth-child(3)::before {
+        content: "计划停留天数";
+      }
+
+      .quarter-table td:nth-child(4)::before {
+        content: "可形成年日均";
+      }
+
+      .plan-box,
+      .share-box {
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .plan-box h3,
+      .share-box h3 {
+        font-size: 16px;
+      }
+
+      .share-summary {
+        max-height: 220px;
+        overflow: auto;
+        font-size: 12px;
+      }
+
+      .qr-panel {
+        justify-items: start;
+      }
+
+      .qr-panel img {
+        width: 128px;
+        height: 128px;
+      }
+
+      .formula {
+        border-radius: 8px;
+        font-size: 12px;
+      }
+    }
+
     @media print {
       body {
         background: #fff;
@@ -520,7 +748,7 @@
           </div>
         </div>
         <div class="table-scroll">
-          <table>
+          <table class="days-table">
             <thead>
               <tr>
                 <th>到账资金规模</th>
@@ -536,7 +764,7 @@
           <h3>四、分季度推进方案</h3>
         </div>
         <div class="table-scroll">
-          <table>
+          <table class="quarter-table">
             <thead>
               <tr>
                 <th>季度</th>
