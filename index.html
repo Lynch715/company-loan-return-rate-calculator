@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>贷款归行率快速测算表</title>
+  <style>
+    :root {
+      --primary: #1f4e79;
+      --primary-light: #eaf3fb;
+      --accent: #f59e0b;
+      --green: #0f766e;
+      --red: #b91c1c;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --bg: #f3f6fa;
+      --card: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 18px 48px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1f4e79, #0f766e);
+      color: #fff;
+      border-radius: 8px;
+      padding: 28px 30px;
+      box-shadow: 0 12px 30px rgba(31, 78, 121, 0.18);
+      margin-bottom: 22px;
+    }
+
+    .org-name {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      letter-spacing: 0.5px;
+    }
+
+    .header p {
+      margin: 0;
+      opacity: 0.92;
+      font-size: 15px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(209, 213, 219, 0.8);
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 19px;
+      color: var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 7px;
+    }
+
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    input, select {
+      width: 100%;
+      border: none;
+      outline: none;
+      padding: 12px 12px;
+      font-size: 16px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    .unit {
+      padding: 0 12px;
+      color: var(--muted);
+      background: #f9fafb;
+      border-left: 1px solid var(--border);
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+
+    .tips {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      background: var(--primary-light);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid #cfe3f6;
+      min-width: 0;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .metric .value {
+      color: var(--primary);
+      font-size: 22px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .metric .sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      font-size: 14px;
+      min-width: 680px;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: right;
+    }
+
+    th:first-child, td:first-child {
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #374151;
+      font-weight: 800;
+    }
+
+    tr:hover td {
+      background: #fcfcfd;
+    }
+
+    .highlight {
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .warning {
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 22px 0 10px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      color: var(--primary);
+      font-size: 17px;
+    }
+
+    .range-controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 12px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+
+    .range-controls .form-group {
+      margin-bottom: 0;
+    }
+
+    .range-controls input {
+      font-size: 14px;
+      padding: 9px 10px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    button:hover {
+      opacity: 0.92;
+    }
+
+    .plan-box {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 18px;
+    }
+
+    .plan-box h3 {
+      margin: 0 0 8px;
+      color: #9a3412;
+      font-size: 17px;
+    }
+
+    .plan-box p {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    .formula {
+      background: #f9fafb;
+      border: 1px dashed #cbd5e1;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      color: #475569;
+      margin-top: 14px;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .result-row {
+        grid-template-columns: 1fr;
+      }
+
+      .range-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 24px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        max-width: none;
+        padding: 0;
+      }
+
+      .header, .card {
+        box-shadow: none;
+      }
+
+      button {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="header">
+      <div class="org-name">邮储银行重庆分行 公司金融部</div>
+      <h1>贷款归行率快速测算表</h1>
+      <p>把“归行率提升目标”转化为“需要多少年日均、多少资金天数、多少钱停多少天”，便于客户经理制定具体营销方案。</p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>一、基础参数</h2>
+
+        <div class="form-group">
+          <label for="loanAmount">贷款余额</label>
+          <div class="input-wrap">
+            <input id="loanAmount" type="number" value="10000" min="0" step="100" />
+            <span class="unit">万元</span>
+          </div>
+          <div class="tips">例：1亿元贷款请输入 10000</div>
+        </div>
+
+        <div class="form-group">
+          <label for="targetRate">目标归行率</label>
+          <div class="input-wrap">
+            <input id="targetRate" type="number" value="10" min="0" step="0.1" />
+            <span class="unit">%</span>
+          </div>
+          <div class="tips">可填 5、10、15、20 等</div>
+        </div>
+
+        <div class="form-group">
+          <label for="daysInYear">测算天数</label>
+          <div class="input-wrap">
+            <input id="daysInYear" type="number" value="365" min="1" step="1" />
+            <span class="unit">天</span>
+          </div>
+          <div class="tips">一般按 365 天测算</div>
+        </div>
+
+        <div class="form-group">
+          <label for="depositSpreadRate">存款利差率</label>
+          <div class="input-wrap">
+            <input id="depositSpreadRate" type="number" value="2.33" min="0" step="0.01" />
+            <span class="unit">%</span>
+          </div>
+          <div class="tips">活期利差率示例：2.33%，即 10000 万元年日均对应 233 万元/年</div>
+        </div>
+
+        <div class="btn-row">
+          <button onclick="calculate()">重新测算</button>
+          <button class="secondary" onclick="resetDefault()">恢复示例</button>
+          <button class="secondary" onclick="window.print()">打印/另存PDF</button>
+        </div>
+
+        <div class="formula">
+          <strong>核心公式：</strong><br />
+          需年日均存款 = 贷款余额 × 目标归行率<br />
+          需资金天数 = 需年日均存款 × 365<br />
+          需停留天数 = 需资金天数 ÷ 到账资金规模<br />
+          存款利差收入 = 需年日均存款 × 存款利差率
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>二、测算结果</h2>
+
+        <div class="result-row">
+          <div class="metric">
+            <div class="label">需形成年日均存款</div>
+            <div class="value" id="avgDeposit">-</div>
+            <div class="sub">贷款余额 × 目标归行率</div>
+          </div>
+          <div class="metric">
+            <div class="label">需完成资金天数</div>
+            <div class="value" id="fundDays">-</div>
+            <div class="sub">年日均 × 测算天数</div>
+          </div>
+          <div class="metric">
+            <div class="label">预计存款利差收入</div>
+            <div class="value" id="interestIncome">-</div>
+            <div class="sub">年日均存款 × 存款利差率</div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <h3>三、不同资金规模对应停留天数</h3>
+        </div>
+        <div class="range-controls">
+          <div class="form-group">
+            <label for="fundMinAmount">最小资金规模</label>
+            <div class="input-wrap">
+              <input id="fundMinAmount" type="number" value="1000" min="1" step="100" />
+              <span class="unit">万元</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="fundMaxAmount">最大资金规模</label>
+            <div class="input-wrap">
+              <input id="fundMaxAmount" type="number" value="100000" min="1" step="1000" />
+              <span class="unit">万元</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="fundLevelCount">测算档位数</label>
+            <div class="input-wrap">
+              <input id="fundLevelCount" type="number" value="8" min="2" max="12" step="1" />
+              <span class="unit">档</span>
+            </div>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>到账资金规模</th>
+                <th>需停留天数</th>
+                <th>可用于客户沟通的表达</th>
+              </tr>
+            </thead>
+            <tbody id="daysTable"></tbody>
+          </table>
+        </div>
+
+        <div class="section-title">
+          <h3>四、分季度推进方案</h3>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>季度</th>
+                <th>计划到账资金</th>
+                <th>计划停留天数</th>
+                <th>可形成年日均</th>
+              </tr>
+            </thead>
+            <tbody id="quarterTable"></tbody>
+          </table>
+        </div>
+
+        <div class="plan-box">
+          <h3>客户经理话术示例</h3>
+          <p id="speechText">-</p>
+        </div>
+
+        <div class="footer-note">
+          注：本工具为经营测算工具，结果按简单年日均逻辑估算，具体口径以总行、分行统计规则为准。
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const quarters = ["一季度", "二季度", "三季度", "四季度"];
+
+    function formatNumber(num, digits = 0) {
+      if (!isFinite(num)) return "-";
+      return num.toLocaleString("zh-CN", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      });
+    }
+
+    function formatWan(num, digits = 0) {
+      return formatNumber(num, digits) + " 万元";
+    }
+
+    function getInputNumber(id) {
+      const val = parseFloat(document.getElementById(id).value);
+      return isNaN(val) ? 0 : val;
+    }
+
+    function calculate() {
+      const loanAmount = getInputNumber("loanAmount");
+      const targetRate = getInputNumber("targetRate") / 100;
+      const daysInYear = getInputNumber("daysInYear") || 365;
+      const depositSpreadRate = getInputNumber("depositSpreadRate") / 100;
+      const fundMinAmount = getInputNumber("fundMinAmount") || 1;
+      const fundMaxAmount = getInputNumber("fundMaxAmount") || fundMinAmount;
+      const fundLevelCount = Math.round(getInputNumber("fundLevelCount") || 8);
+
+      const avgDeposit = loanAmount * targetRate;
+      const fundDays = avgDeposit * daysInYear;
+      const interestIncome = avgDeposit * depositSpreadRate;
+
+      document.getElementById("avgDeposit").textContent = formatWan(avgDeposit, 0);
+      document.getElementById("fundDays").textContent = formatNumber(fundDays, 0) + " 万元·天";
+      document.getElementById("interestIncome").textContent = formatWan(interestIncome, 2);
+
+      renderDaysTable(fundDays, fundMinAmount, fundMaxAmount, fundLevelCount);
+      renderQuarterTable(fundDays, daysInYear);
+      renderSpeech(loanAmount, targetRate, avgDeposit, fundDays);
+    }
+
+    function getRoundUnit(maxAmount) {
+      if (maxAmount >= 100000) return 5000;
+      if (maxAmount >= 10000) return 1000;
+      return 100;
+    }
+
+    function generateFundOptions(minAmount, maxAmount, levelCount) {
+      const min = Math.max(1, Math.min(minAmount, maxAmount));
+      const max = Math.max(1, Math.max(minAmount, maxAmount));
+      const count = Math.min(12, Math.max(2, levelCount));
+
+      if (min === max) return [min];
+
+      const unit = getRoundUnit(max);
+      const step = (max - min) / (count - 1);
+      const amounts = [];
+
+      for (let i = 0; i < count; i++) {
+        if (i === 0) {
+          amounts.push(min);
+        } else if (i === count - 1) {
+          amounts.push(max);
+        } else {
+          amounts.push(Math.round((min + step * i) / unit) * unit);
+        }
+      }
+
+      return [...new Set(amounts)].filter(amount => amount > 0).sort((a, b) => a - b);
+    }
+
+    function renderDaysTable(fundDays, minAmount, maxAmount, levelCount) {
+      const tbody = document.getElementById("daysTable");
+      tbody.innerHTML = "";
+
+      const fundOptions = generateFundOptions(minAmount, maxAmount, levelCount);
+
+      fundOptions.forEach(amount => {
+        const days = amount > 0 ? fundDays / amount : 0;
+        const tr = document.createElement("tr");
+
+        let cls = days <= 30 ? "highlight" : days > 180 ? "warning" : "";
+        let sentence = `${formatWan(amount)}资金沉淀约 ${formatNumber(days, 1)} 天，可达到目标归行率要求。`;
+
+        tr.innerHTML = `
+          <td>${formatWan(amount)}</td>
+          <td class="${cls}">${formatNumber(days, 1)} 天</td>
+          <td>${sentence}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderQuarterTable(fundDays, daysInYear) {
+      const tbody = document.getElementById("quarterTable");
+      tbody.innerHTML = "";
+
+      const amountPerQuarter = 10000;
+      const daysPerQuarter = fundDays / 4 / amountPerQuarter;
+
+      quarters.forEach(q => {
+        const avg = amountPerQuarter * daysPerQuarter / daysInYear;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${q}</td>
+          <td>${formatWan(amountPerQuarter)}</td>
+          <td>${formatNumber(daysPerQuarter, 1)} 天</td>
+          <td>${formatWan(avg, 0)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderSpeech(loanAmount, targetRate, avgDeposit, fundDays) {
+      const targetRateText = formatNumber(targetRate * 100, 1).replace(".0", "") + "%";
+      const oneLoanDays = loanAmount > 0 ? fundDays / loanAmount : 0;
+      const twoLoanDays = loanAmount * 2 > 0 ? fundDays / (loanAmount * 2) : 0;
+      const fourLoanDays = loanAmount * 4 > 0 ? fundDays / (loanAmount * 4) : 0;
+
+      const text = `这笔贷款余额为 ${formatWan(loanAmount)}，如果要实现 ${targetRateText} 归行率，全年需要形成约 ${formatWan(avgDeposit)} 年日均存款。换算成资金安排，可以理解为：${formatWan(loanAmount)}资金沉淀约 ${formatNumber(oneLoanDays, 1)} 天，或者 ${formatWan(loanAmount * 2)}资金沉淀约 ${formatNumber(twoLoanDays, 1)} 天，或者 ${formatWan(loanAmount * 4)}资金沉淀约 ${formatNumber(fourLoanDays, 1)} 天。可结合客户工程款到账、监管资金留存、票据保证金、提前还款前资金停留等节点，分阶段实现归行目标。`;
+
+      document.getElementById("speechText").textContent = text;
+    }
+
+    function resetDefault() {
+      document.getElementById("loanAmount").value = 10000;
+      document.getElementById("targetRate").value = 10;
+      document.getElementById("daysInYear").value = 365;
+      document.getElementById("depositSpreadRate").value = 2.33;
+      document.getElementById("fundMinAmount").value = 1000;
+      document.getElementById("fundMaxAmount").value = 100000;
+      document.getElementById("fundLevelCount").value = 8;
+      calculate();
+    }
+
+    document.querySelectorAll("input").forEach(input => {
+      input.addEventListener("input", calculate);
+    });
+
+    calculate();
+  </script>
+</body>
+</html>
