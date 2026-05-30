@@ -800,6 +800,11 @@
       return formatNumber(num, digits) + " 万元";
     }
 
+    function formatCeilDays(days) {
+      if (!isFinite(days)) return "-";
+      return Math.max(1, Math.ceil(days)) + " 天";
+    }
+
     function getInputNumber(id) {
       const val = parseFloat(document.getElementById(id).value);
       return isNaN(val) ? 0 : val;
@@ -865,14 +870,15 @@
 
       fundOptions.forEach(amount => {
         const days = amount > 0 ? fundDays / amount : 0;
+        const displayDays = formatCeilDays(days);
         const tr = document.createElement("tr");
 
         let cls = days <= 30 ? "highlight" : days > 180 ? "warning" : "";
-        let sentence = `${formatWan(amount)}资金沉淀约 ${formatNumber(days, 1)} 天，可达到目标归行率要求。`;
+        let sentence = `${formatWan(amount)}资金沉淀约 ${displayDays}，可达到目标归行率要求。`;
 
         tr.innerHTML = `
           <td>${formatWan(amount)}</td>
-          <td class="${cls}">${formatNumber(days, 1)} 天</td>
+          <td class="${cls}">${displayDays}</td>
           <td>${sentence}</td>
         `;
         tbody.appendChild(tr);
@@ -892,7 +898,7 @@
         tr.innerHTML = `
           <td>${q}</td>
           <td>${formatWan(amountPerQuarter)}</td>
-          <td>${formatNumber(daysPerQuarter, 1)} 天</td>
+          <td>${formatCeilDays(daysPerQuarter)}</td>
           <td>${formatWan(avg, 0)}</td>
         `;
         tbody.appendChild(tr);
@@ -905,7 +911,7 @@
       const twoLoanDays = loanAmount * 2 > 0 ? fundDays / (loanAmount * 2) : 0;
       const fourLoanDays = loanAmount * 4 > 0 ? fundDays / (loanAmount * 4) : 0;
 
-      const text = `这笔贷款余额为 ${formatWan(loanAmount)}，如果要实现 ${targetRateText} 归行率，全年需要形成约 ${formatWan(avgDeposit)} 年日均存款。换算成资金安排，可以理解为：${formatWan(loanAmount)}资金沉淀约 ${formatNumber(oneLoanDays, 1)} 天，或者 ${formatWan(loanAmount * 2)}资金沉淀约 ${formatNumber(twoLoanDays, 1)} 天，或者 ${formatWan(loanAmount * 4)}资金沉淀约 ${formatNumber(fourLoanDays, 1)} 天。可结合客户工程款到账、监管资金留存、票据保证金、提前还款前资金停留等节点，分阶段实现归行目标。`;
+      const text = `这笔贷款余额为 ${formatWan(loanAmount)}，如果要实现 ${targetRateText} 归行率，全年需要形成约 ${formatWan(avgDeposit)} 年日均存款。换算成资金安排，可以理解为：${formatWan(loanAmount)}资金沉淀约 ${formatCeilDays(oneLoanDays)}，或者 ${formatWan(loanAmount * 2)}资金沉淀约 ${formatCeilDays(twoLoanDays)}，或者 ${formatWan(loanAmount * 4)}资金沉淀约 ${formatCeilDays(fourLoanDays)}。可结合客户工程款到账、监管资金留存、票据保证金、提前还款前资金停留等节点，分阶段实现归行目标。`;
 
       document.getElementById("speechText").textContent = text;
     }
