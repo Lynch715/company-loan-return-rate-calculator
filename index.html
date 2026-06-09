@@ -135,7 +135,7 @@
 
     .result-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 14px;
       margin-bottom: 18px;
     }
@@ -675,6 +675,11 @@
             <div class="sub">投放日期至 12 月 31 日</div>
           </div>
           <div class="metric">
+            <div class="label">贷款年日均</div>
+            <div class="value" id="loanAvg">-</div>
+            <div class="sub">贷款余额 × 计入天数 ÷ 365</div>
+          </div>
+          <div class="metric">
             <div class="label">需形成年日均存款</div>
             <div class="value" id="avgDeposit">-</div>
             <div class="sub">按投放后计入天数折算</div>
@@ -781,6 +786,24 @@
       return Math.floor((yearEnd - effectiveStart) / 86400000) + 1;
     }
 
+    function getRemainingPeriods(dateText) {
+      const year = parseInt(dateText.slice(0, 4), 10) || new Date().getFullYear();
+      const start = new Date(`${dateText}T00:00:00`);
+      const yearStart = new Date(`${year}-01-01T00:00:00`);
+      const yearEnd = new Date(`${year}-12-31T00:00:00`);
+      const effectiveStart = start < yearStart ? yearStart : start;
+
+      if (effectiveStart > yearEnd) {
+        return { months: 1, quarters: 1 };
+      }
+
+      const startMonth = effectiveStart.getMonth();
+      const months = Math.max(1, 12 - startMonth);
+      const quarters = Math.max(1, 4 - Math.floor(startMonth / 3));
+
+      return { months, quarters };
+    }
+
     function formatRatioLabel(ratio) {
       return `贷款金额${formatNumber(ratio * 100, 0)}%`;
     }
@@ -794,18 +817,21 @@
       const depositYieldRate = getInputNumber("depositYieldRate") / 100;
       const customFundAmount = getInputNumber("customFundAmount");
 
-      const avgDeposit = loanAmount * activeDays / daysInYear * targetRate;
+      const loanAvg = loanAmount * activeDays / daysInYear;
+      const avgDeposit = loanAvg * targetRate;
       const fundDays = avgDeposit * daysInYear;
       const interestIncome = avgDeposit * depositYieldRate;
       const fundOptions = generateFundOptions(loanAmount, customFundAmount);
+      const periods = getRemainingPeriods(loanDate);
 
       document.getElementById("activeDays").textContent = activeDays + " 天";
+      document.getElementById("loanAvg").textContent = formatWan(loanAvg, 0);
       document.getElementById("avgDeposit").textContent = formatWan(avgDeposit, 0);
       document.getElementById("interestIncome").textContent = formatWan(interestIncome, 2);
 
-      renderDaysTable(fundDays, fundOptions);
-      renderSpeech(loanAmount, loanDate, targetRate, avgDeposit, fundDays, fundOptions);
-      renderShareSummary(loanAmount, loanDate, targetRate, avgDeposit, interestIncome);
+      renderDaysTable(fundDays, fundOptions, periods);
+      renderSpeech(loanAmount, loanDate, targetRate, loanAvg, avgDeposit, fundDays, fundOptions, periods);
+      renderShareSummary(loanAmount, loanDate, targetRate, loanAvg, avgDeposit, interestIncome);
     }
 
     function generateFundOptions(loanAmount, customFundAmount) {
@@ -814,7 +840,9 @@
         label: formatRatioLabel(ratio)
       }));
 
-      if (customFundAmount > 0) {
+      const hasSameAmount = rows.some(row => Math.round(row.amount) === Math.round(customFundAmount));
+
+      if (customFundAmount > 0 && !hasSameAmount) {
         rows.push({
           amount: customFundAmount,
           label: "自定义"
@@ -824,7 +852,7 @@
       return rows.filter(row => row.amount > 0);
     }
 
-    function renderDaysTable(fundDays, fundOptions) {
+    function renderDaysTable(fundDays, fundOptions, periods) {
       const tbody = document.getElementById("daysTable");
       tbody.innerHTML = "";
 
@@ -832,12 +860,12 @@
         const days = amount > 0 ? fundDays / amount : 0;
         const displayDays = formatCeilDays(days);
         const dayCount = Math.max(1, Math.ceil(days));
-        const monthlyDays = Math.max(1, Math.ceil(dayCount / 12));
-        const quarterlyDays = Math.max(1, Math.ceil(dayCount / 4));
+        const monthlyDays = Math.max(1, Math.ceil(dayCount / periods.months));
+        const quarterlyDays = Math.max(1, Math.ceil(dayCount / periods.quarters));
         const tr = document.createElement("tr");
 
         let cls = days <= 30 ? "highlight" : days > 180 ? "warning" : "";
-        let sentence = `${formatWan(amount)}来 ${displayDays}，可以达到目标归行率。也可以理解为每月约 ${monthlyDays} 天，或每季度约 ${quarterlyDays} 天。`;
+        let sentence = `${formatWan(amount)}来 ${displayDays}，可以达到目标归行率。按剩余 ${periods.months} 个月安排，每月约 ${monthlyDays} 天；按剩余 ${periods.quarters} 个季度安排，每季度约 ${quarterlyDays} 天。`;
 
         tr.innerHTML = `
           <td>${formatWan(amount)}（${label}）</td>
@@ -848,27 +876,23 @@
       });
     }
 
-    function getRepresentativeFundOptions(fundOptions) {
-      if (fundOptions.length <= 3) return fundOptions;
-      return [
-        fundOptions[0],
-        fundOptions[2],
-        fundOptions[fundOptions.length - 1]
-      ];
+    function getPrimaryFundOption(fundOptions) {
+      return fundOptions.find(row => row.label === "贷款金额100%") || fundOptions[0];
     }
 
-    function renderSpeech(loanAmount, loanDate, targetRate, avgDeposit, fundDays, fundOptions) {
+    function renderSpeech(loanAmount, loanDate, targetRate, loanAvg, avgDeposit, fundDays, fundOptions, periods) {
       const targetRateText = formatNumber(targetRate * 100, 1).replace(".0", "") + "%";
-      const examples = getRepresentativeFundOptions(fundOptions)
-        .map(({ amount }) => `${formatWan(amount)}来 ${formatCeilDays(fundDays / amount)}`)
-        .join("，或者 ");
+      const primaryOption = getPrimaryFundOption(fundOptions);
+      const primaryDays = Math.max(1, Math.ceil(fundDays / primaryOption.amount));
+      const monthlyDays = Math.max(1, Math.ceil(primaryDays / periods.months));
+      const quarterlyDays = Math.max(1, Math.ceil(primaryDays / periods.quarters));
 
-      const text = `这笔贷款余额为 ${formatWan(loanAmount)}，投放日期为 ${loanDate}，如果要实现 ${targetRateText} 归行率，需要形成约 ${formatWan(avgDeposit)} 年日均存款。直白说，可以安排：${examples}。客户也可以拆成每月或每季度来款，累计达到上述停留天数即可。`;
+      const text = `这笔贷款余额为 ${formatWan(loanAmount)}，投放日期为 ${loanDate}，折算贷款年日均约 ${formatWan(loanAvg)}。如果要实现 ${targetRateText} 归行率，需要形成约 ${formatWan(avgDeposit)} 年日均存款。按贷款等额来款测算，${formatWan(primaryOption.amount)}来 ${primaryDays} 天即可；也可以按剩余 ${periods.months} 个月分散安排，平均每月约 ${monthlyDays} 天，或按剩余 ${periods.quarters} 个季度安排，平均每季度约 ${quarterlyDays} 天。`;
 
       document.getElementById("speechText").textContent = text;
     }
 
-    function buildShareSummary(loanAmount, loanDate, targetRate, avgDeposit, interestIncome) {
+    function buildShareSummary(loanAmount, loanDate, targetRate, loanAvg, avgDeposit, interestIncome) {
       const targetRateText = formatNumber(targetRate * 100, 1).replace(".0", "") + "%";
       const speech = document.getElementById("speechText").textContent;
 
@@ -876,6 +900,7 @@
         "贷款归行率测算结果",
         `贷款余额：${formatWan(loanAmount)}`,
         `投放日期：${loanDate}`,
+        `贷款年日均：${formatWan(loanAvg)}`,
         `目标归行率：${targetRateText}`,
         `需形成年日均存款：${formatWan(avgDeposit)}`,
         `预计产生收入：${formatWan(interestIncome, 2)}`,
@@ -887,8 +912,8 @@
       ].join("\n");
     }
 
-    function renderShareSummary(loanAmount, loanDate, targetRate, avgDeposit, interestIncome) {
-      const summary = buildShareSummary(loanAmount, loanDate, targetRate, avgDeposit, interestIncome);
+    function renderShareSummary(loanAmount, loanDate, targetRate, loanAvg, avgDeposit, interestIncome) {
+      const summary = buildShareSummary(loanAmount, loanDate, targetRate, loanAvg, avgDeposit, interestIncome);
       document.getElementById("shareSummary").textContent = summary;
       document.getElementById("pageUrlText").textContent = pageUrl;
       document.getElementById("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(pageUrl)}`;
