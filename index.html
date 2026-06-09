@@ -135,7 +135,7 @@
 
     .result-row {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       margin-bottom: 18px;
     }
@@ -243,25 +243,6 @@
     .range-controls input {
       font-size: 14px;
       padding: 9px 10px;
-    }
-
-    .quarter-input {
-      width: 120px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 14px;
-      text-align: right;
-    }
-
-    .status-ok {
-      color: var(--green);
-      font-weight: 800;
-    }
-
-    .status-pending {
-      color: var(--red);
-      font-weight: 700;
     }
 
     .btn-row {
@@ -528,23 +509,16 @@
       .days-table thead,
       .days-table tbody,
       .days-table tr,
-      .days-table td,
-      .quarter-table,
-      .quarter-table thead,
-      .quarter-table tbody,
-      .quarter-table tr,
-      .quarter-table td {
+      .days-table td {
         display: block;
         width: 100%;
       }
 
-      .days-table thead,
-      .quarter-table thead {
+      .days-table thead {
         display: none;
       }
 
-      .days-table tr,
-      .quarter-table tr {
+      .days-table tr {
         margin-bottom: 10px;
         padding: 10px;
         border: 1px solid #e2e8f0;
@@ -552,23 +526,20 @@
         background: #fff;
       }
 
-      .days-table td,
-      .quarter-table td {
+      .days-table td {
         border-bottom: none;
         padding: 6px 0;
         text-align: left;
       }
 
-      .days-table td:not(:last-child),
-      .quarter-table td {
+      .days-table td:not(:last-child) {
         display: flex;
         align-items: baseline;
         justify-content: space-between;
         gap: 12px;
       }
 
-      .days-table td::before,
-      .quarter-table td::before {
+      .days-table td::before {
         color: var(--muted);
         font-size: 12px;
         font-weight: 700;
@@ -586,35 +557,6 @@
         content: "沟通表达";
         display: block;
         margin-bottom: 4px;
-      }
-
-      .quarter-table td:nth-child(1)::before {
-        content: "季度";
-      }
-
-      .quarter-table td:nth-child(2)::before {
-        content: "计划到账资金";
-      }
-
-      .quarter-table td:nth-child(3)::before {
-        content: "停留天数";
-      }
-
-      .quarter-table td:nth-child(4)::before {
-        content: "本季贡献";
-      }
-
-      .quarter-table td:nth-child(5)::before {
-        content: "累计完成率";
-      }
-
-      .quarter-table td:nth-child(6)::before {
-        content: "状态";
-      }
-
-      .quarter-input {
-        width: 150px;
-        min-height: 40px;
       }
 
       .plan-box,
@@ -674,7 +616,7 @@
     <section class="header">
       <div class="org-name">邮储银行重庆分行 公司金融部</div>
       <h1>贷款归行率快速测算表</h1>
-      <p>把“归行率提升目标”转化为“需要多少年日均、多少钱停多少天、预计产生多少收入”，便于客户经理制定具体营销方案。</p>
+      <p>按贷款投放日期测算归行目标，把“需要多少年日均”转化成“来多少钱、来多少天”的直白方案。</p>
     </section>
 
     <div class="grid">
@@ -688,6 +630,14 @@
             <span class="unit">万元</span>
           </div>
           <div class="tips">例：1亿元贷款请输入 10000</div>
+        </div>
+
+        <div class="form-group">
+          <label for="loanDate">贷款投放日期</label>
+          <div class="input-wrap">
+            <input id="loanDate" type="date" value="2026-01-01" />
+          </div>
+          <div class="tips">按投放日至当年年底计算归行所需年日均</div>
         </div>
 
         <div class="form-group">
@@ -720,9 +670,14 @@
 
         <div class="result-row">
           <div class="metric">
+            <div class="label">投放至年末计入天数</div>
+            <div class="value" id="activeDays">-</div>
+            <div class="sub">投放日期至 12 月 31 日</div>
+          </div>
+          <div class="metric">
             <div class="label">需形成年日均存款</div>
             <div class="value" id="avgDeposit">-</div>
-            <div class="sub">贷款余额 × 目标归行率</div>
+            <div class="sub">按投放后计入天数折算</div>
           </div>
           <div class="metric">
             <div class="label">预计产生收入</div>
@@ -732,70 +687,37 @@
         </div>
 
         <div class="section-title">
-          <h3>三、不同资金规模对应停留天数</h3>
+          <h3>三、来款金额对应停留天数</h3>
         </div>
         <div class="range-controls">
           <div class="form-group">
-            <label for="fundMinAmount">最小资金规模</label>
+            <label for="customFundAmount">自定义来款金额</label>
             <div class="input-wrap">
-              <input id="fundMinAmount" type="number" value="10000" min="1" step="100" />
+              <input id="customFundAmount" type="number" value="10000" min="1" step="100" />
               <span class="unit">万元</span>
             </div>
-          </div>
-          <div class="form-group">
-            <label for="fundMaxAmount">最大资金规模</label>
-            <div class="input-wrap">
-              <input id="fundMaxAmount" type="number" value="50000" min="1" step="1000" />
-              <span class="unit">万元</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="fundLevelCount">测算档位数</label>
-            <div class="input-wrap">
-              <input id="fundLevelCount" type="number" value="4" min="2" max="12" step="1" />
-              <span class="unit">档</span>
-            </div>
+            <div class="tips">表格默认按贷款金额的 25%、50%、100%、150%、200% 测算</div>
           </div>
         </div>
         <div class="table-scroll">
           <table class="days-table">
             <thead>
               <tr>
-                <th>到账资金规模</th>
+                <th>来款金额</th>
                 <th>需停留天数</th>
-                <th>可用于客户沟通的表达</th>
+                <th>直白说明</th>
               </tr>
             </thead>
             <tbody id="daysTable"></tbody>
           </table>
         </div>
-
-        <div class="section-title">
-          <h3>四、分季度推进方案</h3>
-        </div>
-        <div class="table-scroll">
-          <table class="quarter-table">
-            <thead>
-              <tr>
-                <th>季度</th>
-                <th>计划到账资金</th>
-                <th>停留天数</th>
-                <th>本季贡献</th>
-                <th>累计完成率</th>
-                <th>状态</th>
-              </tr>
-            </thead>
-            <tbody id="quarterTable"></tbody>
-          </table>
-        </div>
-
         <div class="plan-box">
           <h3>测算说明</h3>
           <p id="speechText">-</p>
         </div>
 
         <div class="share-box">
-          <h3>五、复制与二维码</h3>
+          <h3>四、复制与二维码</h3>
           <div class="share-summary" id="shareSummary">-</div>
           <div class="btn-row">
             <button class="accent" id="copySummaryBtn" onclick="copySummary()">复制测算结果/说明</button>
@@ -820,7 +742,7 @@
 
   <script>
     const pageUrl = "https://lynch715.github.io/company-loan-return-rate-calculator/";
-    const quarters = ["一季度", "二季度", "三季度", "四季度"];
+    const fundRatios = [0.25, 0.5, 1, 1.5, 2];
 
     function formatNumber(num, digits = 0) {
       if (!isFinite(num)) return "-";
@@ -844,73 +766,81 @@
       return isNaN(val) ? 0 : val;
     }
 
+    function getLoanDate() {
+      const value = document.getElementById("loanDate").value;
+      return value || `${new Date().getFullYear()}-01-01`;
+    }
+
+    function getActiveDays(dateText) {
+      const year = parseInt(dateText.slice(0, 4), 10) || new Date().getFullYear();
+      const start = new Date(`${dateText}T00:00:00`);
+      const yearStart = new Date(`${year}-01-01T00:00:00`);
+      const yearEnd = new Date(`${year}-12-31T00:00:00`);
+      const effectiveStart = start < yearStart ? yearStart : start;
+      if (effectiveStart > yearEnd) return 0;
+      return Math.floor((yearEnd - effectiveStart) / 86400000) + 1;
+    }
+
+    function formatRatioLabel(ratio) {
+      return `贷款金额${formatNumber(ratio * 100, 0)}%`;
+    }
+
     function calculate() {
       const loanAmount = getInputNumber("loanAmount");
+      const loanDate = getLoanDate();
+      const activeDays = getActiveDays(loanDate);
       const targetRate = getInputNumber("targetRate") / 100;
       const daysInYear = 365;
       const depositYieldRate = getInputNumber("depositYieldRate") / 100;
-      const fundMinAmount = getInputNumber("fundMinAmount") || 1;
-      const fundMaxAmount = getInputNumber("fundMaxAmount") || fundMinAmount;
-      const fundLevelCount = Math.round(getInputNumber("fundLevelCount") || 4);
+      const customFundAmount = getInputNumber("customFundAmount");
 
-      const avgDeposit = loanAmount * targetRate;
+      const avgDeposit = loanAmount * activeDays / daysInYear * targetRate;
       const fundDays = avgDeposit * daysInYear;
       const interestIncome = avgDeposit * depositYieldRate;
-      const fundOptions = generateFundOptions(fundMinAmount, fundMaxAmount, fundLevelCount);
+      const fundOptions = generateFundOptions(loanAmount, customFundAmount);
 
+      document.getElementById("activeDays").textContent = activeDays + " 天";
       document.getElementById("avgDeposit").textContent = formatWan(avgDeposit, 0);
       document.getElementById("interestIncome").textContent = formatWan(interestIncome, 2);
 
       renderDaysTable(fundDays, fundOptions);
-      renderQuarterTable(fundDays, daysInYear, fundOptions);
-      renderSpeech(loanAmount, targetRate, avgDeposit, fundDays, fundOptions);
-      renderShareSummary(loanAmount, targetRate, avgDeposit, fundDays, interestIncome);
+      renderSpeech(loanAmount, loanDate, targetRate, avgDeposit, fundDays, fundOptions);
+      renderShareSummary(loanAmount, loanDate, targetRate, avgDeposit, interestIncome);
     }
 
-    function getRoundUnit(maxAmount) {
-      if (maxAmount >= 100000) return 5000;
-      if (maxAmount >= 10000) return 1000;
-      return 100;
-    }
+    function generateFundOptions(loanAmount, customFundAmount) {
+      const rows = fundRatios.map(ratio => ({
+        amount: loanAmount * ratio,
+        label: formatRatioLabel(ratio)
+      }));
 
-    function generateFundOptions(minAmount, maxAmount, levelCount) {
-      const min = Math.max(1, Math.min(minAmount, maxAmount));
-      const max = Math.max(1, Math.max(minAmount, maxAmount));
-      const count = Math.min(12, Math.max(2, levelCount));
-
-      if (min === max) return [min];
-
-      const unit = getRoundUnit(max);
-      const step = (max - min) / (count - 1);
-      const amounts = [];
-
-      for (let i = 0; i < count; i++) {
-        if (i === 0) {
-          amounts.push(min);
-        } else if (i === count - 1) {
-          amounts.push(max);
-        } else {
-          amounts.push(Math.round((min + step * i) / unit) * unit);
-        }
+      if (customFundAmount > 0) {
+        rows.push({
+          amount: customFundAmount,
+          label: "自定义"
+        });
       }
 
-      return [...new Set(amounts)].filter(amount => amount > 0).sort((a, b) => a - b);
+      return rows.filter(row => row.amount > 0);
     }
 
     function renderDaysTable(fundDays, fundOptions) {
       const tbody = document.getElementById("daysTable");
       tbody.innerHTML = "";
 
-      fundOptions.forEach(amount => {
+      fundOptions.forEach(({ amount, label }) => {
         const days = amount > 0 ? fundDays / amount : 0;
         const displayDays = formatCeilDays(days);
+        const dayCount = Math.max(1, Math.ceil(days));
+        const monthlyDays = Math.max(1, Math.ceil(dayCount / 12));
+        const quarterlyDays = Math.max(1, Math.ceil(dayCount / 4));
         const tr = document.createElement("tr");
 
         let cls = days <= 30 ? "highlight" : days > 180 ? "warning" : "";
-        let sentence = `${formatWan(amount)}资金沉淀约 ${displayDays}，可达到目标归行率要求。`;
+        let sentence = `${formatWan(amount)}来 ${displayDays}，可以达到目标归行率。也可以理解为每月约 ${monthlyDays} 天，或每季度约 ${quarterlyDays} 天。`;
 
         tr.innerHTML = `
-          <td>${formatWan(amount)}</td>
+          <td>${formatWan(amount)}（${label}）</td>
           <td class="${cls}">${displayDays}</td>
           <td>${sentence}</td>
         `;
@@ -918,90 +848,34 @@
       });
     }
 
-    function getExistingInputNumber(id, fallback) {
-      const el = document.getElementById(id);
-      if (!el) return fallback;
-      const val = parseFloat(el.value);
-      return isNaN(val) ? fallback : val;
-    }
-
-    function splitDaysAcrossQuarters(totalDays) {
-      const baseDays = Math.floor(totalDays / quarters.length);
-      const extraDays = totalDays % quarters.length;
-      return quarters.map((_, index) => baseDays + (index < extraDays ? 1 : 0));
-    }
-
-    function renderQuarterTable(fundDays, daysInYear, fundOptions) {
-      const tbody = document.getElementById("quarterTable");
-      const defaultAmount = fundOptions[0] || 1;
-      const defaultTotalDays = Math.max(1, Math.ceil(fundDays / defaultAmount));
-      const defaultDays = splitDaysAcrossQuarters(defaultTotalDays);
-      const plans = quarters.map((_, index) => ({
-        amount: getExistingInputNumber(`quarterAmount${index}`, defaultAmount),
-        days: getExistingInputNumber(`quarterDays${index}`, defaultDays[index])
-      }));
-
-      tbody.innerHTML = "";
-      let cumulativeDays = 0;
-      let reached = false;
-
-      quarters.forEach((q, index) => {
-        const plan = plans[index];
-        const contribution = plan.amount * plan.days;
-        cumulativeDays += contribution;
-        const completionRate = fundDays > 0 ? cumulativeDays / fundDays * 100 : 0;
-        const isReached = completionRate >= 100;
-        const status = reached
-          ? "已达标，可不安排"
-          : isReached
-            ? "本季达标"
-            : "未达标";
-        const statusClass = isReached || reached ? "status-ok" : "status-pending";
-        reached = reached || isReached;
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${q}</td>
-          <td><input class="quarter-input" id="quarterAmount${index}" type="number" value="${plan.amount}" min="0" step="100" /> 万元</td>
-          <td><input class="quarter-input" id="quarterDays${index}" type="number" value="${plan.days}" min="0" step="1" /> 天</td>
-          <td>${formatNumber(contribution, 0)} 万元·天</td>
-          <td>${formatNumber(completionRate, 1)}%</td>
-          <td class="${statusClass}">${status}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.querySelectorAll(".quarter-input").forEach(input => {
-        input.addEventListener("input", calculate);
-      });
-    }
-
     function getRepresentativeFundOptions(fundOptions) {
       if (fundOptions.length <= 3) return fundOptions;
       return [
         fundOptions[0],
-        fundOptions[Math.floor((fundOptions.length - 1) / 2)],
+        fundOptions[2],
         fundOptions[fundOptions.length - 1]
       ];
     }
 
-    function renderSpeech(loanAmount, targetRate, avgDeposit, fundDays, fundOptions) {
+    function renderSpeech(loanAmount, loanDate, targetRate, avgDeposit, fundDays, fundOptions) {
       const targetRateText = formatNumber(targetRate * 100, 1).replace(".0", "") + "%";
       const examples = getRepresentativeFundOptions(fundOptions)
-        .map(amount => `${formatWan(amount)}资金沉淀约 ${formatCeilDays(fundDays / amount)}`)
+        .map(({ amount }) => `${formatWan(amount)}来 ${formatCeilDays(fundDays / amount)}`)
         .join("，或者 ");
 
-      const text = `这笔贷款余额为 ${formatWan(loanAmount)}，如果要实现 ${targetRateText} 归行率，全年需要形成约 ${formatWan(avgDeposit)} 年日均存款。按当前资金规模区间测算，可以理解为：${examples}。可结合客户工程款到账、监管资金留存、票据保证金、提前还款前资金停留等节点，分阶段实现归行目标。`;
+      const text = `这笔贷款余额为 ${formatWan(loanAmount)}，投放日期为 ${loanDate}，如果要实现 ${targetRateText} 归行率，需要形成约 ${formatWan(avgDeposit)} 年日均存款。直白说，可以安排：${examples}。客户也可以拆成每月或每季度来款，累计达到上述停留天数即可。`;
 
       document.getElementById("speechText").textContent = text;
     }
 
-    function buildShareSummary(loanAmount, targetRate, avgDeposit, fundDays, interestIncome) {
+    function buildShareSummary(loanAmount, loanDate, targetRate, avgDeposit, interestIncome) {
       const targetRateText = formatNumber(targetRate * 100, 1).replace(".0", "") + "%";
       const speech = document.getElementById("speechText").textContent;
 
       return [
         "贷款归行率测算结果",
         `贷款余额：${formatWan(loanAmount)}`,
+        `投放日期：${loanDate}`,
         `目标归行率：${targetRateText}`,
         `需形成年日均存款：${formatWan(avgDeposit)}`,
         `预计产生收入：${formatWan(interestIncome, 2)}`,
@@ -1013,8 +887,8 @@
       ].join("\n");
     }
 
-    function renderShareSummary(loanAmount, targetRate, avgDeposit, fundDays, interestIncome) {
-      const summary = buildShareSummary(loanAmount, targetRate, avgDeposit, fundDays, interestIncome);
+    function renderShareSummary(loanAmount, loanDate, targetRate, avgDeposit, interestIncome) {
+      const summary = buildShareSummary(loanAmount, loanDate, targetRate, avgDeposit, interestIncome);
       document.getElementById("shareSummary").textContent = summary;
       document.getElementById("pageUrlText").textContent = pageUrl;
       document.getElementById("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(pageUrl)}`;
@@ -1061,17 +935,10 @@
 
     function resetDefault() {
       document.getElementById("loanAmount").value = 10000;
+      document.getElementById("loanDate").value = "2026-01-01";
       document.getElementById("targetRate").value = 10;
       document.getElementById("depositYieldRate").value = 2.33;
-      document.getElementById("fundMinAmount").value = 10000;
-      document.getElementById("fundMaxAmount").value = 50000;
-      document.getElementById("fundLevelCount").value = 4;
-      quarters.forEach((_, index) => {
-        const amountInput = document.getElementById(`quarterAmount${index}`);
-        const daysInput = document.getElementById(`quarterDays${index}`);
-        if (amountInput) amountInput.value = "";
-        if (daysInput) daysInput.value = "";
-      });
+      document.getElementById("customFundAmount").value = 10000;
       calculate();
     }
 
